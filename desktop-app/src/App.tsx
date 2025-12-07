@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, MessageSquare, Server, Settings, Terminal, Shield, Play, RefreshCw, Send, Plus, Network, X } from 'lucide-react';
+import { Activity, MessageSquare, Server, Settings, Terminal, Shield, Play, RefreshCw, Send, Plus, Network, X, Link, Globe } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import { Input } from './components/ui/input';
@@ -7,8 +7,8 @@ import { Badge } from './components/ui/badge';
 import { cn } from './lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// API BASE URL
-const API_URL = "http://127.0.0.1:4002";
+// Default to Local API, but allow override
+const DEFAULT_API = "http://127.0.0.1:4002";
 
 type View = 'admin' | 'chat';
 
@@ -30,10 +30,18 @@ function App() {
   const [activeView, setActiveView] = useState<View>('admin');
   const [showConfig, setShowConfig] = useState(false);
 
+  // Dynamic API Configuration
+  const [apiUrl, setApiUrl] = useState(() => localStorage.getItem("connectit_api_url") || DEFAULT_API);
+
+  const updateApiUrl = (url: string) => {
+    // Remove trailing slash
+    const cleanUrl = url.replace(/\/$/, "");
+    setApiUrl(cleanUrl);
+    localStorage.setItem("connectit_api_url", cleanUrl);
+  }
+
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden font-sans selection:bg-primary/30">
-
-      {/* Background Decor */}
       <div className="absolute inset-0 bg-grid opacity-[0.2] pointer-events-none" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-primary/20 blur-[100px] rounded-full pointer-events-none" />
 
@@ -47,36 +55,26 @@ function App() {
         </div>
 
         <nav className="flex-1 p-4 space-y-2">
-          <Button
-            variant={activeView === 'admin' ? 'secondary' : 'ghost'}
-            className="w-full justify-start gap-3 h-11"
-            onClick={() => setActiveView('admin')}
-          >
-            <Shield className="w-4 h-4" />
-            Network Admin
+          <Button variant={activeView === 'admin' ? 'secondary' : 'ghost'} className="w-full justify-start gap-3 h-11" onClick={() => setActiveView('admin')} >
+            <Shield className="w-4 h-4" /> Network Admin
           </Button>
-          <Button
-            variant={activeView === 'chat' ? 'secondary' : 'ghost'}
-            className="w-full justify-start gap-3 h-11"
-            onClick={() => setActiveView('chat')}
-          >
-            <MessageSquare className="w-4 h-4" />
-            AI Chat
+          <Button variant={activeView === 'chat' ? 'secondary' : 'ghost'} className="w-full justify-start gap-3 h-11" onClick={() => setActiveView('chat')} >
+            <MessageSquare className="w-4 h-4" /> AI Chat
           </Button>
         </nav>
 
         <div className="p-4 border-t border-border bg-black/40">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 text-sm text-green-400">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_#10b981]" />
+              <Globe className="w-3 h-3" />
               <span className="font-medium">Online</span>
             </div>
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowConfig(true)}>
               <Settings className="w-3 h-3" />
             </Button>
           </div>
-          <div className="text-[10px] text-muted-foreground font-mono">
-            Port: 4003 • v0.1.0
+          <div className="text-[10px] text-muted-foreground font-mono truncate" title={apiUrl}>
+            API: {apiUrl.replace(/http:\/\/|https:\/\//, "")}
           </div>
         </div>
       </aside>
@@ -84,38 +82,45 @@ function App() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-full relative z-10">
         <AnimatePresence mode='wait'>
-          {activeView === 'admin' && <AdminView key="admin" onConfigure={() => setShowConfig(true)} />}
-          {activeView === 'chat' && <ChatView key="chat" />}
+          {activeView === 'admin' && <AdminView key="admin" apiUrl={apiUrl} onConfigure={() => setShowConfig(true)} />}
+          {activeView === 'chat' && <ChatView key="chat" apiUrl={apiUrl} />}
         </AnimatePresence>
       </main>
 
       {/* Config Modal */}
       <AnimatePresence>
-        {showConfig && <ConfigModal onClose={() => setShowConfig(false)} />}
+        {showConfig && <ConfigModal onClose={() => setShowConfig(false)} apiUrl={apiUrl} setApiUrl={updateApiUrl} />}
       </AnimatePresence>
     </div>
   );
 }
 
-const ConfigModal = ({ onClose }: { onClose: () => void }) => {
+const ConfigModal = ({ onClose, apiUrl, setApiUrl }: { onClose: () => void, apiUrl: string, setApiUrl: (u: string) => void }) => {
   const [entryPoint, setEntryPoint] = useState("");
+  const [localApiInput, setLocalApiInput] = useState(apiUrl);
   const [status, setStatus] = useState("");
 
   const handleConnect = async () => {
     if (!entryPoint) return;
-    setStatus("connecting...");
+    setStatus("Connecting to Peer...");
     try {
-      const res = await fetch(`${API_URL}/connect?addr=${encodeURIComponent(entryPoint)}`);
+      const res = await fetch(`${apiUrl}/connect?addr=${encodeURIComponent(entryPoint)}`);
       const data = await res.json();
       if (data.status === 'connected') {
-        setStatus("Connected!");
-        setTimeout(onClose, 1000);
+        setStatus("Connected to Mesh!");
+        setTimeout(() => setStatus(""), 2000);
       } else {
         setStatus(`Error: ${data.message || 'Failed'}`);
       }
     } catch (e) {
-      setStatus("Network Error");
+      setStatus("API Error: Backend Unreachable");
     }
+  }
+
+  const handleSaveApi = () => {
+    setApiUrl(localApiInput);
+    setStatus("API URL Updated");
+    setTimeout(() => setStatus(""), 1000);
   }
 
   return (
@@ -124,30 +129,56 @@ const ConfigModal = ({ onClose }: { onClose: () => void }) => {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-card border border-border w-full max-w-md rounded-xl shadow-2xl overflow-hidden"
+        className="bg-card border border-border w-full max-w-lg rounded-xl shadow-2xl overflow-hidden"
       >
         <div className="p-6 border-b border-border flex justify-between items-center">
-          <h3 className="font-bold text-lg">Network Configuration</h3>
+          <h3 className="font-bold text-lg">System Configuration</h3>
           <Button variant="ghost" size="icon" onClick={onClose}><X className="w-4 h-4" /></Button>
         </div>
-        <div className="p-6 space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Entry Point (Bootstrap URL)</label>
+        <div className="p-6 space-y-6">
+
+          {/* Section 1: Backend API */}
+          <div className="space-y-3 pb-4 border-b border-border/50">
+            <div className="flex items-center gap-2 mb-1">
+              <Globe className="w-4 h-4 text-primary" />
+              <label className="text-sm font-bold">Backend API URL</label>
+            </div>
+            <p className="text-xs text-muted-foreground mb-2">
+              Control where the app sends commands. Use <code className="bg-secondary px-1 rounded">http://127.0.0.1:4002</code> for local, or an Ngrok HTTP URL for cloud.
+            </p>
+            <div className="flex gap-2">
+              <Input
+                value={localApiInput}
+                onChange={e => setLocalApiInput(e.target.value)}
+                placeholder="http://127.0.0.1:4002"
+                className="font-mono text-xs"
+              />
+              <Button variant="secondary" onClick={handleSaveApi}>Set</Button>
+            </div>
+          </div>
+
+          {/* Section 2: P2P Connection */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 mb-1">
+              <Link className="w-4 h-4 text-primary" />
+              <label className="text-sm font-bold">P2P Entry Point (Bootstrap)</label>
+            </div>
             <div className="flex gap-2">
               <Input
                 placeholder="ws://192.168.1.X:4003"
                 value={entryPoint}
                 onChange={e => setEntryPoint(e.target.value)}
-                className="font-mono text-sm"
+                className="font-mono text-xs"
               />
               <Button onClick={handleConnect} disabled={!entryPoint}>Connect</Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Enter the WebSocket address of a known peer to join the mesh.
+              Enter the WebSocket address of a known peer (e.g., from Colab) to join the network.
             </p>
           </div>
+
           {status && (
-            <div className={cn("text-xs p-2 rounded bg-secondary", status.includes("Error") ? "text-red-400" : "text-green-400")}>
+            <div className={cn("text-xs p-3 rounded font-medium border", status.includes("Error") ? "bg-red-500/10 border-red-500/20 text-red-400" : "bg-green-500/10 border-green-500/20 text-green-400")}>
               {status}
             </div>
           )}
@@ -157,18 +188,21 @@ const ConfigModal = ({ onClose }: { onClose: () => void }) => {
   )
 }
 
-const AdminView = ({ onConfigure }: { onConfigure: () => void }) => {
+const AdminView = ({ onConfigure, apiUrl }: { onConfigure: () => void, apiUrl: string }) => {
   const [peers, setPeers] = useState<Peer[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
 
   const fetchPeers = async () => {
     setLoading(true);
+    setError(false);
     try {
-      const res = await fetch(`${API_URL}/peers`);
+      const res = await fetch(`${apiUrl}/peers`);
       const data = await res.json();
       setPeers(data);
     } catch (e) {
       console.error("Failed to fetch peers", e);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -178,7 +212,7 @@ const AdminView = ({ onConfigure }: { onConfigure: () => void }) => {
     fetchPeers();
     const interval = setInterval(fetchPeers, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [apiUrl]);
 
   return (
     <motion.div
@@ -190,11 +224,14 @@ const AdminView = ({ onConfigure }: { onConfigure: () => void }) => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Network Overview</h2>
-          <p className="text-muted-foreground text-sm mt-1">Monitor mesh connectivity and node health.</p>
+          <div className="flex items-center gap-2 text-muted-foreground text-sm mt-1">
+            <div className={cn("w-2 h-2 rounded-full", error ? "bg-red-500" : "bg-green-500")} />
+            Connected to {apiUrl}
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={onConfigure}>
-            <Plus className="w-4 h-4 mr-2" /> Add Peer
+            <Plus className="w-4 h-4 mr-2" /> System Config
           </Button>
           <Button variant="outline" size="icon" onClick={fetchPeers} disabled={loading}>
             <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
@@ -205,7 +242,7 @@ const AdminView = ({ onConfigure }: { onConfigure: () => void }) => {
       <div className="grid grid-cols-3 gap-4">
         <StatsCard title="Active Peers" value={peers.length} icon={<Server className="w-4 h-4 text-blue-400" />} />
         <StatsCard title="Avg Latency" value={`${Math.round(peers.reduce((acc, p) => acc + (p.latency_ms || 0), 0) / (peers.length || 1))}ms`} icon={<Activity className="w-4 h-4 text-green-400" />} />
-        <StatsCard title="Network Status" value={peers.length > 0 ? "Healthy" : "Isolated"} icon={<Shield className={cn("w-4 h-4", peers.length > 0 ? "text-primary" : "text-red-400")} />} />
+        <StatsCard title="Network Status" value={!error && peers.length > 0 ? "Healthy" : "Isolated"} icon={<Shield className={cn("w-4 h-4", !error && peers.length > 0 ? "text-primary" : "text-red-400")} />} />
       </div>
 
       <Card className="flex-1 border-border bg-card/50 backdrop-blur-sm shadow-xl">
@@ -215,7 +252,13 @@ const AdminView = ({ onConfigure }: { onConfigure: () => void }) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          {peers.length === 0 ? (
+          {error ? (
+            <div className="text-center py-12 space-y-2">
+              <div className="text-red-400 font-bold">Connection Failed</div>
+              <p className="text-sm text-muted-foreground">Could not connect to API at {apiUrl}</p>
+              <Button variant="outline" size="sm" onClick={onConfigure}>Change API URL</Button>
+            </div>
+          ) : peers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
               <div className="w-16 h-16 rounded-full bg-secondary/50 flex items-center justify-center">
                 <Server className="w-8 h-8 text-muted-foreground/50" />
@@ -252,7 +295,7 @@ const AdminView = ({ onConfigure }: { onConfigure: () => void }) => {
   );
 }
 
-const ChatView = () => {
+const ChatView = ({ apiUrl }: { apiUrl: string }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -260,12 +303,12 @@ const ChatView = () => {
   const [providers, setProviders] = useState<any[]>([]);
 
   useEffect(() => {
-    // Fetch providers on mount
-    fetch(`${API_URL}/providers`).then(r => r.json()).then(data => {
+    // Fetch providers on mount or when API URL changes
+    fetch(`${apiUrl}/providers`).then(r => r.json()).then(data => {
       setProviders(data);
       if (data.length > 0) setProviderId(data[0].peer_id);
     }).catch(e => console.error(e));
-  }, []);
+  }, [apiUrl]);
 
   const handleSend = async () => {
     if (!input.trim() || !providerId) return;
@@ -277,7 +320,7 @@ const ChatView = () => {
     setSending(true);
 
     try {
-      const res = await fetch(`${API_URL}/chat`, {
+      const res = await fetch(`${apiUrl}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

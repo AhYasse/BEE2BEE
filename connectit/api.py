@@ -18,7 +18,11 @@ async def lifespan(app: FastAPI):
     port = int(os.getenv("CONNECTIT_PORT", "4001"))
     host = os.getenv("CONNECTIT_HOST", "0.0.0.0")
     
-    node = P2PNode(host=host, port=port)
+    announce_host = os.getenv("CONNECTIT_ANNOUNCE_HOST")
+    announce_port_str = os.getenv("CONNECTIT_ANNOUNCE_PORT")
+    announce_port = int(announce_port_str) if announce_port_str else None
+
+    node = P2PNode(host=host, port=port, announce_host=announce_host, announce_port=announce_port)
     await node.start()
     
     # Auto-bootstrap if env var is set
@@ -27,7 +31,8 @@ async def lifespan(app: FastAPI):
         await node.connect_bootstrap(bootstrap)
 
     # Enable Supervisor Monitoring
-    await node.enable_monitoring(interval_seconds=60) # Default to 60s for demo, can be longer
+    # Use shorter interval (15s) for better stability over tunnels/NAT
+    await node.enable_monitoring(interval_seconds=15)
     
     # --- PRINT INSTRUCTIONS FOR USER ---
     from rich.console import Console

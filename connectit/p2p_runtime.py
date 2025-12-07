@@ -25,10 +25,11 @@ console = Console(**console_kwargs)
 
 
 class P2PNode:
-    def __init__(self, host: str = "0.0.0.0", port: int = 4001, announce_host: Optional[str] = None):
+    def __init__(self, host: str = "0.0.0.0", port: int = 4001, announce_host: Optional[str] = None, announce_port: Optional[int] = None):
         self.host = host
         self.port = port
         self.announce_host = announce_host
+        self.announce_port = announce_port
         self.peer_id = new_id("peer")
         
         # We'll set self.addr after start() once we know the port
@@ -135,7 +136,9 @@ class P2PNode:
         else:
             display_host = self.host
             
-        self.addr = f"ws://{display_host}:{self.port}"
+        # Use explicit announce_port if provided, otherwise use the bound port
+        display_port = self.announce_port if self.announce_port else self.port
+        self.addr = f"ws://{display_host}:{display_port}"
         console.log(f"[bold green]P2P Node Started[/bold green] at {self.addr}")
 
     async def stop(self):

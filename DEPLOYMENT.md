@@ -22,20 +22,6 @@ Railway detects the `Dockerfile` automatically.
 5.  **Note**: For P2P to work best, you might need a service that allows exposing multiple ports (TCP/UDP), or just rely on the main HTTP/WS port.
 
 ### 2. Fly.io (Best for P2P)
-Fly.io supports persistent VMs and is great for networking.
-1.  Install `flyctl`.
-2.  Run `fly launch`.
-3.  It will use the `Dockerfile`.
-4.  Run `fly deploy`.
-
-### 3. VPS (DigitalOcean / AWS / Hetzner)
-You can rent a small server ($5/mo) and run:
-```bash
-# 1. Install Docker
-curl -fsSL https://get.docker.com | sh
-
-# 2. Build & Run
-docker build -t connectit .
 docker run -d --net=host --restart=always connectit
 ```
 *Note: `--net=host` is recommended for P2P apps to simplify port forwarding.*
