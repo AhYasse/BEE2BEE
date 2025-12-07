@@ -312,7 +312,10 @@ class P2PNode:
         await self._send(ws, {"type": "pong", "ts": data.get("ts")})
 
     async def _handle_pong(self, ws, data):
-        rtt = (time.time() - float(data.get("ts", time.time()))) * 1000.0
+        ts = data.get("ts")
+        if ts is None:
+            ts = time.time()
+        rtt = (time.time() - float(ts)) * 1000.0
         async with self._lock:
             for pid, info in self.peers.items():
                 if info["ws"] is ws:
