@@ -133,25 +133,28 @@ def p2p_request(prompt, model, bootstrap_link, max_new_tokens):
 
 @cli.command()
 @click.option('--host', default='127.0.0.1', help='API Host')
-@click.option('--port', default=8000, help='API Port')
-@click.option('--p2p-port', default=4001, help='P2P Port')
+@click.option('--port', default=4002, help='API Port')
+@click.option('--p2p-port', default=4003, help='P2P Port')
 @click.option('--bootstrap', default=None, help='Bootstrap URL (default: config)')
 def api(host, port, p2p_port, bootstrap):
     """Start the ConnectIT API server (Main Point)."""
     os.environ["CONNECTIT_PORT"] = str(p2p_port)
     
-    # If this IS the main point, it might not need a bootstrap, 
-    # OR it might want to join a wider network.
-    # Typically Main Point IS the bootstrap.
-    if bootstrap:
-        os.environ["CONNECTIT_BOOTSTRAP"] = bootstrap
+    # Logic to decide if we should bootstrap
+    target_bootstrap = bootstrap or get_bootstrap_url()
+    
+    # Simple check: if the target_bootstrap matches ONLY the p2p port we are starting,
+    # and we are on localhost, we probably shouldn't connect to ourselves.
+    # This is a heuristic.
+    if str(p2p_port) in target_bootstrap and ("127.0.0.1" in target_bootstrap or "localhost" in target_bootstrap):
+        # We are likely the main point
+        console.print("[yellow]ℹ️  Skipping bootstrap (Self-referential)[/yellow]")
     else:
-        # API doesn't necessarily need to bootstrap if it is the root, 
-        # but if there is a config, it might try to connect to itself which handle_connect will block, so it's fine.
-        os.environ["CONNECTIT_BOOTSTRAP"] = get_bootstrap_url()
+        os.environ["CONNECTIT_BOOTSTRAP"] = target_bootstrap
         
     import uvicorn
-    uvicorn.run("connectit.api:app", host=host, port=port, reload=False) # Reload false for prod
+    console.print(f"[bold green]🚀 Starting Main Point API on http://{host}:{port}[/bold green]")
+    uvicorn.run("connectit.api:app", host=host, port=port, reload=False)
 
 
 

@@ -5,6 +5,7 @@ pyproject.toml
 connectit/__init__.py
 connectit/__main__.py
 connectit/api.py
+connectit/config.py
 connectit/datasets.py
 connectit/dht.py
 connectit/hf.py

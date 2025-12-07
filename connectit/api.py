@@ -28,6 +28,27 @@ async def lifespan(app: FastAPI):
 
     # Enable Supervisor Monitoring
     await node.enable_monitoring(interval_seconds=60) # Default to 60s for demo, can be longer
+    
+    # --- PRINT INSTRUCTIONS FOR USER ---
+    from rich.console import Console
+    from .utils import get_lan_ip
+    console = Console()
+    
+    # Determine accessible address
+    real_ip = get_lan_ip()
+    # If the node is bound to 0.0.0.0, we use the LAN IP. 
+    # If it was specific, we use that.
+    if node.host == "0.0.0.0":
+        display_host = real_ip
+    else:
+        display_host = node.host
+        
+    bootstrap_addr = f"ws://{display_host}:{node.port}"
+    
+    console.print("\n[bold yellow]✨ Main Point Started Successfully![/bold yellow]")
+    console.print("[dim]To connect other nodes to this network, run this command on them:[/dim]")
+    console.print(f"\n   [bold cyan]python -m connectit config bootstrap_url {bootstrap_addr}[/bold cyan]\n")
+    # -----------------------------------
         
     yield
     

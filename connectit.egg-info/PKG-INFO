@@ -105,15 +105,14 @@ ConnectIT
 
 **A decentralized peer-to-peer network for deploying and accessing AI models.**
 
-ConnectIT allows you to run a node that serves Hugging Face models to the network, or act as a client that automatically discovers and uses the cheapest and fastest model providers available. It features an integrated Supervisor Mode for health monitoring.
+ConnectIT behaves like a single giant computer. You configure a **Main Entry Point** once, and all your nodes—whether providers or clients—automatically connect, discover each other, and share work.
 
 ## ✨ Features
 
-- 🌐 **Dynamic P2P Network**: Automatically detects your LAN IP and assigns random ports for zero-config setup.
-- 👁️ **Supervisor Monitoring**: The API node acts as a "Main Point" that actively monitors peer health (latency, availability) every 60s.
-- 🤖 **Async Model Loading**: Loading large models doesn't block the network causing disconnects.
-- 💰 **Economic Model**: Set your price per token. Clients automatically route to the best value.
-- 🔌 **HTTP API**: REST API to query network status, peers, and health stats.
+- 🌐 **Zero-Config Networking**: Set your Main Point once. No manual IP handling.
+- 👁️ **Supervisor Monitoring**: The Main Point actively monitors network health.
+- 💰 **Automated Economics**: Clients automatically route queries to the cheapest/fastest provider.
+- 🔌 **HTTP API**: Monitor your entire mesh via a REST interface.
 
 ## 📦 Installation
 
@@ -126,45 +125,51 @@ cd connectit
 pip install -e .[all]
 ```
 
-## 🚀 Quick Start
+## 🚀 Usage
 
-### 1. Start a Supervisor Node (Main Point)
+### 1. Start the Main Entry Point (Supervisor)
 
-This node will act as the bootstrap server and actively monitor the health of all connected peers.
-
-```bash
-# Start on default API port 8000. P2P port can be 4001 or random.
-python -m connectit api
-```
-*The console will show "Supervisor Monitoring Enabled". Check `http://localhost:8000/peers` for health stats.*
-
-### 2. Deploy a Model Provider
-
-Nodes deploy services and join the network. They will be monitored by the Supervisor.
+This server acts as the central hub (bootstrap) for your network.
 
 ```bash
-# Replace bootstrap-link with the Supervisor's link
-python -m connectit deploy-hf --model distilgpt2 --bootstrap-link ws://192.168.1.X:4001
+# Start the supervisor. Note the P2P address (e.g., ws://192.168.1.15:4001)
+python -m connectit api --port 8000
 ```
 
-### 3. Request Generation
+### 2. Configure Clients/Nodes (One-Time Setup)
+
+On any machine you want to join the network, tell it where the supervisor is. You only do this **once**.
 
 ```bash
-python -m connectit p2p-request "Hello, world!" --model distilgpt2 --bootstrap-link ws://192.168.1.X:4001
+python -m connectit config bootstrap_url ws://192.168.1.15:4001
+```
+
+### 3. Deploy Providers (Zero Config)
+
+Now, start as many providers as you want. You don't need to specify IPs or ports.
+
+```bash
+python -m connectit deploy-hf --model distilgpt2
+```
+
+The node will:
+1.  Read the config to find the Main Point.
+2.  Auto-assign a port.
+3.  Join the mesh and announce its service.
+
+### 4. Run Requests (Client)
+
+Similarly, clients just run.
+
+```bash
+python -m connectit p2p-request "Hello AI" --model distilgpt2
 ```
 
 ## 🏗 Architecture
 
-### Supervisor / Main Point
-When you run `connectit api`, the node starts a background task (`_monitoring_loop`) that iterates over all connected peers every minute.
--   **Ping**: Sends distinct ping packets to measure RTT.
--   **Health Audit**: Updates the peer's `health_status` (online/degraded) based on connectivity.
--   **API Exposure**: This data is available at `/peers`.
-
-### Core Components
-1.  **P2PNode (`p2p_runtime.py`)**: Core engine with gossip, dynamic IP, and monitoring logic.
-2.  **Services (`services.py`)**: threaded model loading for stability.
-3.  **API (`api.py`)**: FastAPI interface to the node and supervisor stats.
+-   **Main Point**: The configured `bootstrap_url` is the heartbeat of the network. It gossips peer lists to everyone.
+-   **Config Persistence**: Stored in `~/.connectit/config.json`.
+-   **Dynamic Mesh**: Nodes can come and go; the mesh heals automatically.
 
 ## 🤝 Contributing
 

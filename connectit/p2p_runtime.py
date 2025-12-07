@@ -23,6 +23,72 @@ class P2PNode:
         self.port = port
         self.peer_id = new_id("peer")
         self.addr = f"ws://{host}:{port}"
+        self.server: Optional[websockets.server.Serve] = None
+        
+        # State
+        self.peers: Dict[str, Dict[str, Any]] = {}  # pid -> {ws, addr, last_pong_ms}
+        self.local_services: Dict[str, BaseService] = {}  # svc_name -> ServiceInstance
+        self.providers: Dict[str, Dict[str, Any]] = {}  # pid -> {svc_name: metadata}
+        self.pieces: Dict[str, Dict[str, Any]] = {}  # content_hash -> blob_info
+        
+        self._lock = asyncio.Lock()
+        self._pending_requests: Dict[str, asyncio.Future] = {}
+        self._running = False
+        self._monitor_active = False
+
+    async def enable_monitoring(self, interval_seconds: int = 3600):
+        """Enable the supervisor monitoring loop."""
+        if self._monitor_active:
+            return
+        self._monitor_active = True
+        asyncio.create_task(self._monitoring_loop(interval_seconds))
+        console.print(f"[bold magenta]👁️ Supervisor Monitoring Enabled (Interval: {interval_seconds}s)[/bold magenta]")
+
+    async def _monitoring_loop(self, interval: int):
+        while self._monitor_active and self._running:
+            try:
+                await self._run_health_checks()
+            except Exception as e:
+                console.print(f"[red]Monitoring Error: {e}[/red]")
+            await asyncio.sleep(interval)
+
+    async def _run_health_checks(self):
+        from .utils import now_ms
+        timestamp = now_ms()
+        peers_to_check = list(self.peers.items())
+        
+        # Only log if we have peers to avoid spam
+        if peers_to_check:
+            console.print(f"\n[magenta]🔎 Running Health Check on {len(peers_to_check)} peers...[/magenta]")
+        
+        for pid, peer_data in peers_to_check:
+            ws = peer_data.get("ws")
+            if not ws or ws.closed:
+                continue
+                
+            # 1. Latency Check (Ping)
+            t0 = time.time()
+            try:
+                await self._send(ws, {"type": "ping", "timestamp": t0})
+                
+                # Update peer metadata
+                self.peers[pid]["last_audit"] = timestamp
+                self.peers[pid]["health_status"] = "online"
+                
+                # Check providers validity (simple heuristic)
+                if pid in self.providers:
+                    self.providers[pid]["last_audit"] = timestamp
+                    self.providers[pid]["health"] = "good" 
+                    
+            except Exception:
+                self.peers[pid]["health_status"] = "unreachable"
+                if pid in self.providers:
+                    self.providers[pid]["health"] = "degraded"
+
+    async def start(self):
+        async def handler(ws: WebSocketServerProtocol):
+            await self._handle_connection(ws)
+            
         console.log(f"[cyan]P2P listening[/cyan] on ws://{self.host}:{self.port}")
         self.server = await websockets.serve(handler, self.host, self.port, max_size=32*1024*1024)
         self._running = True

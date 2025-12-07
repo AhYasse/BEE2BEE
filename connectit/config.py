@@ -10,9 +10,10 @@ CONFIG_FILE = "config.json"
 
 DEFAULT_CONFIG = {
     # Default local supervisor for dev
-    "bootstrap_url": "ws://127.0.0.1:8000", 
+    # Using 4002/4003 as 8000/4001 are often blocked/busy on Windows
+    "bootstrap_url": "ws://127.0.0.1:4003", 
     "p2p_port": 0,    # Random
-    "api_port": 8000
+    "api_port": 4002
 }
 
 def get_config_path() -> Path:
