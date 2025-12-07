@@ -44,7 +44,7 @@ Run once on each machine:
 ```bash
 python -m connectit config bootstrap_url ws://<SUPERVISOR_IP>:4003
 ```
-
+    
 ### 3. Deploy Providers
 
 **Standard Usage (LAN/Local):** (Auto-detects IP)

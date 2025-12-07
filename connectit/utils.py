@@ -78,3 +78,19 @@ def get_lan_ip() -> str:
     finally:
         s.close()
     return IP
+
+
+def get_public_ip() -> str | None:
+    """Detect the public IP address via external service."""
+    import urllib.request
+    try:
+        # standard public ip echo service
+        return urllib.request.urlopen('https://api.ipify.org').read().decode('utf8')
+    except Exception:
+        return None
+
+
+def is_colab() -> bool:
+    """Check if running in Google Colab."""
+    import sys
+    return 'google.colab' in sys.modules

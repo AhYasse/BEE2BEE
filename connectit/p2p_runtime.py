@@ -10,11 +10,17 @@ from websockets.client import WebSocketClientProtocol
 from rich.console import Console
 
 from .p2p import parse_join_link, sha256_hex_bytes
-from .utils import new_id
+from .utils import new_id, is_colab
 from .pieces import split_pieces, piece_hashes
 from .services import BaseService, HFService, ServiceError
 
-console = Console()
+# In Colab/Jupyter, rich auto-detects HTML output which often buffers or fails in subprocesses.
+# We force terminal mode to ensure we get raw text streaming.
+console_kwargs = {}
+if is_colab():
+    console_kwargs = {"force_terminal": True, "force_interactive": False}
+
+console = Console(**console_kwargs)
 
 
 class P2PNode:
@@ -457,10 +463,13 @@ async def run_p2p_node(host: Optional[str] = None, port: Optional[int] = None, b
         console.print(f"[cyan]Model:[/cyan] {model_name}")
         console.print(f"[blue]Join Link:[/blue] {join_link}")
 
-    # Keep alive
+    # Keep alive with Heartbeat
     try:
         while True:
-            await asyncio.sleep(1)
+            await asyncio.sleep(15)
+            # Periodic Heartbeat
+            peer_count = len(node.peers)
+            console.log(f"[dim]💓 Heartbeat | Peers: {peer_count} | Services: {len(node.local_services)}[/dim]")
+            
     except asyncio.CancelledError:
         await node.stop()
-

@@ -31,23 +31,41 @@ async def lifespan(app: FastAPI):
     
     # --- PRINT INSTRUCTIONS FOR USER ---
     from rich.console import Console
-    from .utils import get_lan_ip
+    from .utils import get_lan_ip, get_public_ip, is_colab
     console = Console()
     
     # Determine accessible address
     real_ip = get_lan_ip()
+    public_ip = get_public_ip()
+    
     # If the node is bound to 0.0.0.0, we use the LAN IP. 
-    # If it was specific, we use that.
     if node.host == "0.0.0.0":
         display_host = real_ip
     else:
         display_host = node.host
         
     bootstrap_addr = f"ws://{display_host}:{node.port}"
+    public_bootstrap_addr = f"ws://{public_ip}:{node.port}" if public_ip else None
     
     console.print("\n[bold yellow]✨ Main Point Started Successfully![/bold yellow]")
     console.print("[dim]To connect other nodes to this network, run this command on them:[/dim]")
-    console.print(f"\n   [bold cyan]python -m connectit config bootstrap_url {bootstrap_addr}[/bold cyan]\n")
+    
+    # 1. LAN / Local
+    console.print(f"\n   [bold cyan]python -m connectit config bootstrap_url {bootstrap_addr}[/bold cyan] [dim](LAN/Local)[/dim]")
+
+    # 2. Public IP
+    if public_bootstrap_addr and public_ip != real_ip:
+         console.print(f"   [bold green]python -m connectit config bootstrap_url {public_bootstrap_addr}[/bold green] [dim](Public Internet)[/dim]")
+         console.print("   [dim italic]Note: Ensure port[/dim italic] [bold]{}[/bold] [dim italic]is forwarded/open on your router/firewall.[/dim italic]".format(node.port))
+
+    # 3. Colab / Tunneling
+    if is_colab():
+        console.print("\n[bold red]⚠️  Running in Google Colab?[/bold red]")
+        console.print("   Direct connections won't work. You MUST use a tunnel (e.g., ngrok).")
+        console.print("   [bold]Option 1 (ngrok):[/bold] Install ngrok, then run:")
+        console.print(f"      [cyan]ngrok http {node.port}[/cyan]")
+        console.print("      Then use `ws://<ngrok-url>` as your bootstrap_url.")
+
     # -----------------------------------
         
     yield
