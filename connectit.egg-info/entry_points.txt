@@ -1,2 +1,2 @@
 [console_scripts]
-connectit = connectit.__main__:app
+connectit = connectit.__main__:cli

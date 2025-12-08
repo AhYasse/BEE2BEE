@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, MessageSquare, Server, Settings, Terminal, Shield, Play, RefreshCw, Send, Plus, Network, X, Link, Globe } from 'lucide-react';
+import { Activity, MessageSquare, Server, Settings, Shield, RefreshCw, Send, Plus, Network, X, Link, Globe, Minus, Square, Maximize2 } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import { Input } from './components/ui/input';
@@ -9,6 +9,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 // Default to Local API, but allow override
 const DEFAULT_API = "http://127.0.0.1:4002";
+
+// Extend Window interface for Electron APIs
+declare global {
+  interface Window {
+    electronWindow?: {
+      minimize: () => void;
+      maximize: () => void;
+      close: () => void;
+    };
+  }
+}
 
 type View = 'admin' | 'chat';
 
@@ -41,12 +52,46 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen bg-background text-foreground overflow-hidden font-sans selection:bg-primary/30">
+    <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden font-sans selection:bg-primary/30">
+      {/* Background Effects */}
       <div className="absolute inset-0 bg-grid opacity-[0.2] pointer-events-none" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-primary/20 blur-[100px] rounded-full pointer-events-none" />
+      
+      {/* Custom Title Bar */}
+      <div className="h-8 bg-card/30 border-b border-border/50 flex items-center justify-between px-4 select-none backdrop-blur-xl z-30" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>
+        <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+          <Network className="w-4 h-4 text-primary" />
+          <span>ConnectIT</span>
+        </div>
+        <div className="flex items-center gap-1" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+          <button
+            onClick={() => window.electronWindow?.minimize()}
+            className="w-8 h-8 hover:bg-secondary/50 rounded flex items-center justify-center transition-colors"
+            title="Minimize"
+          >
+            <Minus className="w-3 h-3" />
+          </button>
+          <button
+            onClick={() => window.electronWindow?.maximize()}
+            className="w-8 h-8 hover:bg-secondary/50 rounded flex items-center justify-center transition-colors"
+            title="Maximize"
+          >
+            <Square className="w-3 h-3" />
+          </button>
+          <button
+            onClick={() => window.electronWindow?.close()}
+            className="w-8 h-8 hover:bg-red-500/20 hover:text-red-400 rounded flex items-center justify-center transition-colors"
+            title="Close"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
 
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-border bg-card/50 flex flex-col backdrop-blur-xl z-20">
+      {/* Main Content Container */}
+      <div className="flex flex-1 relative z-10 overflow-hidden">
+        {/* Sidebar */}
+        <aside className="w-64 border-r border-border bg-card/50 flex flex-col backdrop-blur-xl z-20">
         <div className="p-6 border-b border-border flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center shadow-lg shadow-primary/25">
             <Network className="w-5 h-5 text-white" />
@@ -79,13 +124,14 @@ function App() {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col h-full relative z-10">
-        <AnimatePresence mode='wait'>
-          {activeView === 'admin' && <AdminView key="admin" apiUrl={apiUrl} onConfigure={() => setShowConfig(true)} />}
-          {activeView === 'chat' && <ChatView key="chat" apiUrl={apiUrl} />}
-        </AnimatePresence>
-      </main>
+        {/* Main Content */}
+        <main className="flex-1 flex flex-col overflow-hidden">
+          <AnimatePresence mode='wait'>
+            {activeView === 'admin' && <AdminView key="admin" apiUrl={apiUrl} onConfigure={() => setShowConfig(true)} />}
+            {activeView === 'chat' && <ChatView key="chat" apiUrl={apiUrl} />}
+          </AnimatePresence>
+        </main>
+      </div>
 
       {/* Config Modal */}
       <AnimatePresence>
@@ -219,8 +265,9 @@ const AdminView = ({ onConfigure, apiUrl }: { onConfigure: () => void, apiUrl: s
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="p-8 space-y-8 h-full overflow-y-auto"
+      className="flex flex-col h-full overflow-hidden"
     >
+      <div className="p-8 space-y-8 flex-1 overflow-y-auto">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Network Overview</h2>
@@ -291,6 +338,7 @@ const AdminView = ({ onConfigure, apiUrl }: { onConfigure: () => void, apiUrl: s
           )}
         </CardContent>
       </Card>
+      </div>
     </motion.div>
   );
 }
