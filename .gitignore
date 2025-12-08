@@ -51,3 +51,6 @@ Thumbs.db
 !desktop-app/**/*.ts
 !desktop-app/**/*.tsx
 !desktop-app/**/lib/
+!tauri-app/**/*.ts
+!tauri-app/**/*.tsx
+!tauri-app/**/lib/

@@ -168,10 +168,22 @@ python -m connectit config bootstrap_url ws://<MAIN_POINT_IP>:4003
 ```
 
 **Step B: Deploy Model**
+
+**Option 1: Hugging Face (Default)**
+Uses `transformers` to run models like GPT-2, Llama, etc. on CPU/GPU.
 ```bash
 # Deploys distilgpt2 (CPU friendly)
 python -m connectit deploy-hf --model distilgpt2
 ```
+
+**Option 2: Ollama (Universal)**
+Uses your local Ollama instance to serve models like Llama3, Mistral, Gemma, etc.
+*Prerequisite: Install and run [Ollama](https://ollama.com)*
+```bash
+# Serve a model (e.g., llama3)
+python -m connectit serve-ollama --model llama3
+```
+*Note: This creates a separate peer node on your machine.*
 
 ---
 
