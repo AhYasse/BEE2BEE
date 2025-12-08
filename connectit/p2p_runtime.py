@@ -388,8 +388,9 @@ class P2PNode:
 
     async def _handle_gen_request(self, ws, data):
         rid = data.get("rid")
-        # For now, we only support HF service requests directly
-        svc_name = "hf" 
+        
+        # Determine service
+        svc_name = data.get("svc", "hf") # Default to hf for compatibility
         svc = self.local_services.get(svc_name)
         
         if not svc:
@@ -423,25 +424,52 @@ class P2PNode:
     def list_providers(self) -> List[Dict[str, Any]]:
         out = []
         for pid, svcs in self.providers.items():
-            hf = svcs.get("hf")
-            if hf:
+            all_models = []
+            min_price = float('inf')
+            found_ai_service = False
+
+            for svc_name, meta in svcs.items():
+                if svc_name.startswith("_"): continue 
+                # Aggregate models from any service that has them (hf, ollama)
+                if isinstance(meta, dict) and "models" in meta:
+                    found_ai_service = True
+                    all_models.extend(meta.get("models", []))
+                    price = meta.get("price_per_token", 0.0)
+                    if price < min_price:
+                        min_price = price
+            
+            if found_ai_service:
                 out.append({
                     "peer_id": pid,
                     "addr": self.peers.get(pid, {}).get("addr"),
                     "latency_ms": svcs.get("_latency"),
-                    "models": hf.get("models", []),
-                    "price_per_token": hf.get("price_per_token"),
+                    "models": list(set(all_models)),
+                    "price_per_token": min_price if min_price != float('inf') else 0.0,
                 })
         return out
 
     def pick_provider(self, model_name: str) -> Optional[Tuple[str, Dict[str, Any]]]:
         candidates = []
         for pid, svcs in self.providers.items():
-            hf = svcs.get("hf")
-            if hf and model_name in hf.get("models", []):
-                price = hf.get("price_per_token", float('inf'))
-                latency = svcs.get("_latency", 99999.0)
-                candidates.append((pid, price, latency))
+            # Check all services
+            for svc_name, meta in svcs.items():
+                if svc_name.startswith("_"): continue
+                
+                if isinstance(meta, dict) and model_name in meta.get("models", []):
+                    price = meta.get("price_per_token", 0.0)
+                    latency = svcs.get("_latency", 99999.0)
+                    # We return the specific service metadata so the caller knows which svc to invoke?
+                    # Actually request_generation sends 'svc' field now. We need to pass that back?
+                    # The current pick_provider returns (pid, info). 
+                    # But the caller of request_generation needs to know 'svc' name.
+                    # Wait, request_generation does NOT take svc name arg yet in my updated run_p2p_node, 
+                    # but _handle_gen_request expects 'svc' in packet.
+                    # The API caller (ConnectIT API) currently assumes "hf" or doesn't specify.
+                    
+                    # We'll just return the metadata, but we should inject 'svc_name' into it or handle it.
+                    # For now, let's just make sure we find it.
+                    candidates.append((pid, price, latency))
+                    break # Found a service on this peer
         
         if not candidates:
             return None
@@ -449,7 +477,19 @@ class P2PNode:
         # Sort by price, then latency
         candidates.sort(key=lambda x: (x[1], x[2]))
         best_id = candidates[0][0]
-        return best_id, self.providers[best_id]["hf"]
+        
+        # We need to return the metadata for the *best service* on that peer.
+        # This is slightly inefficient but let's re-find the service meta
+        best_svcs = self.providers[best_id]
+        for svc_name, meta in best_svcs.items():
+             if not svc_name.startswith("_") and model_name in meta.get("models", []):
+                 # Return meta plus the service name so caller can use it
+                 # We copy it to not mutate state
+                 m = meta.copy()
+                 m["_svc_name"] = svc_name 
+                 return best_id, m
+                 
+        return None # Should not happen
 
     async def request_generation(self, provider_id: str, prompt: str, max_new_tokens: int = 32, model_name: Optional[str] = None):
         info = self.peers.get(provider_id)
@@ -460,12 +500,35 @@ class P2PNode:
         future = asyncio.Future()
         self._pending_requests[rid] = future
         
+        # Resolve Service Name
+        # If model_name is known, find which service has it.
+        # If not, pick the first service that isn't internal.
+        target_svc = "hf" # Default
+        if provider_id in self.providers:
+            svcs = self.providers[provider_id]
+            # If model is specified, search for it
+            done = False
+            if model_name:
+                for s, meta in svcs.items():
+                    if not s.startswith("_") and model_name in meta.get("models", []):
+                        target_svc = s
+                        done = True
+                        break
+            
+            # If not found or not specified, pick first available (heuristic)
+            if not done:
+                 for s in svcs.keys():
+                     if not s.startswith("_"):
+                         target_svc = s
+                         break
+
         req = {
             "type": "gen_request",
             "rid": rid,
             "prompt": prompt,
             "max_new_tokens": max_new_tokens,
-            "model": model_name
+            "model": model_name,
+            "svc": target_svc 
         }
         
         await self._send(info["ws"], req)
@@ -477,7 +540,9 @@ class P2PNode:
             raise RuntimeError("request_timed_out")
 
 
-async def run_p2p_node(host: Optional[str] = None, port: Optional[int] = None, bootstrap_link: Optional[str] = None, model_name: Optional[str] = None, price_per_token: Optional[float] = None, announce_host: Optional[str] = None):
+async def run_p2p_node(host: Optional[str] = None, port: Optional[int] = None, bootstrap_link: Optional[str] = None, 
+                       model_name: Optional[str] = None, price_per_token: Optional[float] = None, 
+                       announce_host: Optional[str] = None, backend: str = "hf"):
     from .p2p import generate_join_link
     
     # Defaults
@@ -502,20 +567,32 @@ async def run_p2p_node(host: Optional[str] = None, port: Optional[int] = None, b
         await node.connect_bootstrap(bootstrap_link)
     
     if model_name:
-        console.print(f"\n[yellow]🤖 Preparing model '{model_name}'...[/yellow]")
-        svc = HFService(model_name, float(price_per_token or 0.0))
+        console.print(f"\n[yellow]🤖 Preparing model '{model_name}' ({backend})...[/yellow]")
         
+        svc = None
+        if backend == "hf":
+            svc = HFService(model_name, float(price_per_token or 0.0))
+        elif backend == "ollama":
+            from .services import OllamaService
+            svc = OllamaService(model_name)
+        else:
+            console.print(f"[red]Unknown backend: {backend}[/red]")
+            return
+
         # Run loading in thread so we don't block pings
-        loop = asyncio.get_running_loop()
-        await loop.run_in_executor(None, svc.load_sync)
-        
-        await node.add_service(svc)
-        
-        model_hash = sha256_hex_bytes(model_name.encode())
-        join_link = generate_join_link("connectit", model_name, model_hash, [node.addr])
-        
-        console.print(f"[cyan]Model:[/cyan] {model_name}")
-        console.print(f"[blue]Join Link:[/blue] {join_link}")
+        if svc:
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(None, svc.load_sync)
+            
+            await node.add_service(svc)
+            
+            model_hash = sha256_hex_bytes(model_name.encode())
+            # For ollama, we might want to hint the backend in the join link, but standard join link is model based.
+            # We'll just advertise the model name.
+            join_link = generate_join_link("connectit", model_name, model_hash, [node.addr])
+            
+            console.print(f"[cyan]Model:[/cyan] {model_name} ({backend})")
+            console.print(f"[blue]Join Link:[/blue] {join_link}")
 
     # Keep alive with Heartbeat
     try:

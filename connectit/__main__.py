@@ -75,6 +75,34 @@ def deploy_hf(model, price_per_token, host, port, public_host, bootstrap_link):
 
 
 @cli.command()
+@click.option('--model', default='llama3', help='Ollama model name (e.g. llama3, mistral)')
+@click.option('--host', default=None, help='Bind host (default: 0.0.0.0)')
+@click.option('--port', default=None, type=int, help='Bind port (default: random)')
+@click.option('--public-host', default=None, help='Publicly accessible IP/Hostname')
+@click.option('--bootstrap-link', default=None, help='Bootstrap URL (default: from config)')
+def serve_ollama(model, host, port, public_host, bootstrap_link):
+    """Serve a local Ollama model on the P2P network."""
+    
+    # Auto-resolve bootstrap
+    if not bootstrap_link:
+        bootstrap_link = get_bootstrap_url()
+
+    # Clean up empty strings to None
+    host = host or None
+    port = port or None
+
+    asyncio.run(run_p2p_node(
+        host=host, 
+        port=port, 
+        bootstrap_link=bootstrap_link,
+        model_name=model, 
+        price_per_token=0.0, # Ollama usually free/local
+        announce_host=public_host,
+        backend="ollama"
+    ))
+
+
+@cli.command()
 @click.argument('prompt')
 @click.option('--model', default='distilgpt2', help='Model name to request')
 @click.option('--bootstrap-link', default=None, help='Bootstrap URL (default: from config)')

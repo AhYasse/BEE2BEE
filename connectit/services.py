@@ -83,3 +83,73 @@ class HFService(BaseService):
             }
         except Exception as e:
             raise ServiceError(str(e))
+
+class OllamaService(BaseService):
+    def __init__(self, model_name: str, host: str = "http://localhost:11434"):
+        super().__init__("ollama")
+        self.model_name = model_name
+        self.host = host
+        self.price_per_token = 0.0 # Typically free if local
+        
+    def load_sync(self):
+        # Check connection
+        import requests
+        try:
+            res = requests.get(f"{self.host}/api/tags")
+            if res.status_code != 200:
+                raise ServiceError(f"Ollama reachable but returned {res.status_code}")
+            
+            # Check if model exists
+            models = [m["name"] for m in res.json().get("models", [])]
+            # Simple substring check because ollama models have tags like 'llama3:latest'
+            if not any(self.model_name in m for m in models):
+                 # Try pull? For now just warn or error.
+                 console.log(f"[yellow]⚠️ Model '{self.model_name}' not found in Ollama. Attempting to use anyway (auto-pull might happen).[/yellow]")
+            else:
+                 console.log(f"[green]✓ Ollama Model '{self.model_name}' ready[/green]")
+                 
+        except Exception as e:
+            raise ServiceError(f"Ollama connection failed: {e}")
+
+    def get_metadata(self) -> Dict[str, Any]:
+        return {
+            "models": [self.model_name],
+            "price_per_token": self.price_per_token,
+            "backend": "ollama"
+        }
+
+    def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        import requests
+        prompt = params.get("prompt")
+        if not prompt:
+            raise ServiceError("Missing prompt")
+            
+        try:
+            t0 = time.time()
+            # Non-streaming implementation for now
+            payload = {
+                "model": self.model_name,
+                "prompt": prompt,
+                "stream": False
+            }
+            res = requests.post(f"{self.host}/api/generate", json=payload)
+            if res.status_code != 200:
+                raise ServiceError(f"Ollama Error: {res.text}")
+                
+            data = res.json()
+            text = data.get("response", "")
+            
+            # Stats
+            eval_count = data.get("eval_count", 0)
+            duration_ns = data.get("total_duration", 0)
+            latency_ms = duration_ns / 1_000_000 if duration_ns > 0 else (time.time() - t0) * 1000.0
+            
+            return {
+                "text": text,
+                "tokens": eval_count,
+                "latency_ms": latency_ms,
+                "price_per_token": self.price_per_token,
+                "cost": 0.0
+            }
+        except Exception as e:
+            raise ServiceError(f"Ollama Exec Error: {e}")
