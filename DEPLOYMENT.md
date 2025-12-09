@@ -1,4 +1,4 @@
-# ConnectIT Deployment Guide
+# Bee2Bee Deployment Guide
 
 ## Can I use Vercel?
 **Short Answer: No.**
@@ -11,7 +11,7 @@
 
 ## Recommended Deployment Options (Cloud)
 
-Since `connectit` needs to run as a **Service** (a long-running process), you should use platforms that support Docker or persistent apps.
+Since `bee2bee` needs to run as a **Service** (a long-running process), you should use platforms that support Docker or persistent apps.
 
 ### 1. Railway (Easiest)
 Railway detects the `Dockerfile` automatically.
@@ -22,7 +22,7 @@ Railway detects the `Dockerfile` automatically.
 5.  **Note**: For P2P to work best, you might need a service that allows exposing multiple ports (TCP/UDP), or just rely on the main HTTP/WS port.
 
 ### 2. Fly.io (Best for P2P)
-docker run -d --net=host --restart=always connectit
+docker run -d --net=host --restart=always bee2bee
 ```
 *Note: `--net=host` is recommended for P2P apps to simplify port forwarding.*
 

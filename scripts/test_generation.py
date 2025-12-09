@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
-from connectit.p2p_runtime import P2PNode
+from bee2bee.p2p_runtime import P2PNode
 import logging
 
 # Enable debug logging

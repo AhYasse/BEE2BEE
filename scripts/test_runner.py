@@ -13,7 +13,7 @@ def main():
         sys.path.insert(0, root)
     # Prepare logging
     try:
-        from connectit.utils import data_file
+        from bee2bee.utils import data_file
         log_path = data_file("test.log")
     except Exception:
         log_path = os.path.join(root, "test.log")

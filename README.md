@@ -1,13 +1,13 @@
-ConnectIT
-==========
+Bee2Bee
+=======
 
 <div align="center">
-  <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1016671&theme=neutral&t=1758001359763" alt="ConnectIT Badge" width="250" />
+  <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1016671&theme=neutral&t=1758001359763" alt="Bee2Bee Badge" width="250" />
 </div>
 
-# ConnectIT: Decentralized AI Network
+# Bee2Bee: Decentralized AI Network
 
-**ConnectIT** is a peer-to-peer network that allows you to easily deploy, route, and access AI models across any infrastructure (Local, Cloud, Colab) without complex networking configuration.
+**Bee2Bee** is a peer-to-peer network that allows you to easily deploy, route, and access AI models across any infrastructure (Local, Cloud, Colab) without complex networking configuration.
 
 ---
 
@@ -18,7 +18,7 @@ The ecosystem consists of four main components:
 1.  **Main Point (Tracker/API)**: The central supervisor that tracks active peers and exposes the HTTP API.
 2.  **Worker Nodes (Providers)**: Machines that run `deploy-hf` to host AI models and serve requests.
 3.  **Desktop App (Frontend)**: An Electron+React UI for managing the network and chatting with models.
-4.  **ConnectIT Cloud (Colab)**: A Google Colab notebook acting as a Cloud Node using Hybrid Tunneling.
+4.  **Bee2Bee Cloud (Colab)**: A Google Colab notebook acting as a Cloud Node using Hybrid Tunneling.
 
 ---
 
@@ -31,7 +31,7 @@ This runs the core API server. Every network needs at least one Main Point.
 **Run Locally:**
 ```bash
 # Starts the API on Port 4002 and P2P Server on Port 4003
-python -m connectit api
+python -m bee2bee api
 ```
 *Output:*
 -   **API**: `http://127.0.0.1:4002` (Docs: `/docs`)
@@ -65,10 +65,10 @@ Run this on any machine (or the same machine) to share an AI model.
 **Step A: Configure** (Tell the node where the Main Point is)
 ```bash
 # If running on the SAME machine as Main Point:
-python -m connectit config bootstrap_url ws://127.0.0.1:4003
+python -m bee2bee config bootstrap_url ws://127.0.0.1:4003
 
 # If running on a DIFFERENT machine (LAN/WAN):
-python -m connectit config bootstrap_url ws://<MAIN_POINT_IP>:4003
+python -m bee2bee config bootstrap_url ws://<MAIN_POINT_IP>:4003
 ```
 
 **Step B: Deploy Model**
@@ -77,7 +77,7 @@ python -m connectit config bootstrap_url ws://<MAIN_POINT_IP>:4003
 Uses `transformers` to run models like GPT-2, Llama, etc. on CPU/GPU.
 ```bash
 # Deploys distilgpt2 (CPU friendly)
-python -m connectit deploy-hf --model distilgpt2
+python -m bee2bee deploy-hf --model distilgpt2
 ```
 
 **Option 2: Ollama (Universal)**
@@ -85,13 +85,13 @@ Uses your local Ollama instance to serve models like Llama3, Mistral, Gemma, etc
 *Prerequisite: Install and run [Ollama](https://ollama.com)*
 ```bash
 # Serve a model (e.g., llama3)
-python -m connectit serve-ollama --model llama3
+python -m bee2bee serve-ollama --model llama3
 ```
 *Note: This creates a separate peer node on your machine.*
 
 ---
 
-### 4. ConnectIT Cloud (Google Colab)
+### 4. Bee2Bee Cloud (Google Colab)
 
 Run a powerful node on Google's free GPU infrastructure using our **Hybrid Tunneling** setup.
 
@@ -107,7 +107,7 @@ To bypass Colab's network restrictions, we use two tunnels:
 2.  Run **"Install Dependencies"**.
 3.  Run **"Configure Hybrid Tunnels"** (Installs `cloudflared` & `bore`).
     - *Wait for it to output the URLs.*
-4.  Run **"Run ConnectIT Node"**.
+4.  Run **"Run Bee2Bee Node"**.
     - *It automatically configures itself to announce the Bore address.*
 
 **Connecting your Desktop App to Colab:**
@@ -124,11 +124,11 @@ You can override settings using ENV vars:
 
 | Variable | Description | Default |
 | :--- | :--- | :--- |
-| `CONNECTIT_PORT` | Port for P2P Server | `4003` (Worker) / `4003` (API) |
-| `CONNECTIT_HOST` | Bind Interface | `0.0.0.0` |
-| `CONNECTIT_ANNOUNCE_HOST` | Public Hostname (for NAT/Tunnel) | Auto-detected |
-| `CONNECTIT_ANNOUNCE_PORT` | Public Port (for NAT/Tunnel) | Auto-detected |
-| `CONNECTIT_BOOTSTRAP` | URL of Main Point | `None` |
+| `BEE2BEE_PORT` | Port for P2P Server | `4003` (Worker) / `4003` (API) |
+| `BEE2BEE_HOST` | Bind Interface | `0.0.0.0` |
+| `BEE2BEE_ANNOUNCE_HOST` | Public Hostname (for NAT/Tunnel) | Auto-detected |
+| `BEE2BEE_ANNOUNCE_PORT` | Public Port (for NAT/Tunnel) | Auto-detected |
+| `BEE2BEE_BOOTSTRAP` | URL of Main Point | `None` |
 
 ### Troubleshooting
 -   **"Connection Refused"**: Ensure the `bootstrap_url` is correct and reachable (try `ping`).

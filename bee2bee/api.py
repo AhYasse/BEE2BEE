@@ -15,18 +15,18 @@ async def lifespan(app: FastAPI):
     global node
     # Initialize node on startup with random port or configured port
     import os
-    port = int(os.getenv("CONNECTIT_PORT", "4001"))
-    host = os.getenv("CONNECTIT_HOST", "0.0.0.0")
+    port = int(os.getenv("BEE2BEE_PORT", "4001"))
+    host = os.getenv("BEE2BEE_HOST", "0.0.0.0")
     
-    announce_host = os.getenv("CONNECTIT_ANNOUNCE_HOST")
-    announce_port_str = os.getenv("CONNECTIT_ANNOUNCE_PORT")
+    announce_host = os.getenv("BEE2BEE_ANNOUNCE_HOST")
+    announce_port_str = os.getenv("BEE2BEE_ANNOUNCE_PORT")
     announce_port = int(announce_port_str) if announce_port_str else None
 
     node = P2PNode(host=host, port=port, announce_host=announce_host, announce_port=announce_port)
     await node.start()
     
     # Auto-bootstrap if env var is set
-    bootstrap = os.getenv("CONNECTIT_BOOTSTRAP")
+    bootstrap = os.getenv("BEE2BEE_BOOTSTRAP")
     if bootstrap:
         await node.connect_bootstrap(bootstrap)
 
@@ -56,11 +56,11 @@ async def lifespan(app: FastAPI):
     console.print("[dim]To connect other nodes to this network, run this command on them:[/dim]")
     
     # 1. LAN / Local
-    console.print(f"\n   [bold cyan]python -m connectit config bootstrap_url {bootstrap_addr}[/bold cyan] [dim](LAN/Local)[/dim]")
+    console.print(f"\n   [bold cyan]python -m bee2bee config bootstrap_url {bootstrap_addr}[/bold cyan] [dim](LAN/Local)[/dim]")
 
     # 2. Public IP
     if public_bootstrap_addr and public_ip != real_ip:
-         console.print(f"   [bold green]python -m connectit config bootstrap_url {public_bootstrap_addr}[/bold green] [dim](Public Internet)[/dim]")
+         console.print(f"   [bold green]python -m bee2bee config bootstrap_url {public_bootstrap_addr}[/bold green] [dim](Public Internet)[/dim]")
          console.print("   [dim italic]Note: Ensure port[/dim italic] [bold]{}[/bold] [dim italic]is forwarded/open on your router/firewall.[/dim italic]".format(node.port))
 
     # 3. Colab / Tunneling
@@ -79,7 +79,7 @@ async def lifespan(app: FastAPI):
     if node:
         await node.stop()
 
-app = FastAPI(title="ConnectIT Node API", lifespan=lifespan)
+app = FastAPI(title="Bee2Bee Node API", lifespan=lifespan)
 
 from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(

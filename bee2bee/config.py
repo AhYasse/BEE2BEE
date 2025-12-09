@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from typing import Optional, Dict, Any
 
-from .utils import connectit_home
+from .utils import bee2bee_home
 
 CONFIG_FILE = "config.json"
 
@@ -17,7 +17,7 @@ DEFAULT_CONFIG = {
 }
 
 def get_config_path() -> Path:
-    return connectit_home() / CONFIG_FILE
+    return bee2bee_home() / CONFIG_FILE
 
 def load_config() -> Dict[str, Any]:
     path = get_config_path()
@@ -34,7 +34,7 @@ def save_config(config: Dict[str, Any]):
 
 def get_bootstrap_url() -> str:
     # Env var overrides config
-    env = os.getenv("CONNECTIT_BOOTSTRAP")
+    env = os.getenv("BEE2BEE_BOOTSTRAP")
     if env:
         return env
     

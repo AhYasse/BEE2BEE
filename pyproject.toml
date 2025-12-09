@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "connectit"
-version = "0.1.0"
+name = "bee2bee"
+version = "3.3.0"
 description = "Decentralized P2P network for AI model hosting and inference"
 authors = [{ name = "ConnectIT Team", email = "loaiabdalslam@gmail.com" }]
 readme = "README.md"
@@ -66,10 +66,10 @@ all = [
 ]
 
 [project.scripts]
-connectit = "connectit.__main__:cli"
+bee2bee = "bee2bee.__main__:cli"
 
 [tool.setuptools]
-packages = ["connectit"]
+packages = ["bee2bee"]
 
 [tool.setuptools.package-data]
-connectit = ["*.json", "*.yaml", "*.yml"]
+bee2bee = ["*.json", "*.yaml", "*.yml"]

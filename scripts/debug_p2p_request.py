@@ -5,7 +5,7 @@ Debug script to test p2p-request functionality
 
 import asyncio
 import json
-from connectit.p2p_runtime import P2PNode
+from bee2bee.p2p_runtime import P2PNode
 
 async def debug_p2p_request():
     print("Starting debug P2P request...")

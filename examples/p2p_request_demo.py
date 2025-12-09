@@ -2,7 +2,7 @@
 """
 ConnectIT P2P Request Demo Script
 
-This script demonstrates how to use ConnectIT programmatically to request
+This script demonstrates how to use Bee2Bee programmatically to request
 text generation from the P2P network. It includes examples for:
 - Basic text generation
 - Batch processing multiple prompts
@@ -13,19 +13,19 @@ Usage:
     python p2p_request_demo.py
 
 Prerequisites:
-    1. Install ConnectIT: pip install -e .
+    1. Install Bee2Bee: pip install -e .
     2. Have at least one provider running:
-       python -m connectit deploy-hf --model distilgpt2 --price-per-token 0.002 --port 4001
+       python -m bee2bee deploy-hf --model distilgpt2 --price-per-token 0.002 --port 4001
 """
 
 import asyncio
 import time
 from typing import List, Dict, Optional, Any
-from connectit.p2p_runtime import P2PNode
+from bee2bee.p2p_runtime import P2PNode
 
 
-class ConnectITP2PClient:
-    """A client wrapper for ConnectIT P2P requests."""
+class Bee2BeeP2PClient:
+    """A client wrapper for Bee2Bee P2P requests."""
     
     def __init__(self, host: str = "127.0.0.1", port: int = 0):
         self.host = host
@@ -111,7 +111,7 @@ async def basic_example():
     """Basic example: single text generation request."""
     print("\n=== Basic Example ===")
     
-    async with ConnectITP2PClient() as client:
+    async with Bee2BeeP2PClient() as client:
         # Connect to network (replace with your bootstrap link)
         await client.connect_to_network("ws://127.0.0.1:4001")
         
@@ -143,7 +143,7 @@ async def batch_processing_example():
         "Explain quantum computing in simple terms."
     ]
     
-    async with ConnectITP2PClient() as client:
+    async with Bee2BeeP2PClient() as client:
         await client.connect_to_network("ws://127.0.0.1:4001")
         
         results = []
@@ -181,7 +181,7 @@ async def provider_discovery_example():
     """Provider discovery example: list available providers."""
     print("\n=== Provider Discovery Example ===")
     
-    async with ConnectITP2PClient() as client:
+    async with Bee2BeeP2PClient() as client:
         await client.connect_to_network("ws://127.0.0.1:4001", discovery_time=3.0)
         
         providers = client.list_available_providers()
@@ -204,7 +204,7 @@ async def error_handling_example():
     """Error handling example: dealing with network issues."""
     print("\n=== Error Handling Example ===")
     
-    async with ConnectITP2PClient() as client:
+    async with Bee2BeeP2PClient() as client:
         try:
             # Try to connect to a non-existent bootstrap
             print("🔄 Attempting to connect to non-existent bootstrap...")
@@ -219,7 +219,7 @@ async def error_handling_example():
             if not result:
                 print("❌ No providers available for the requested model")
                 print("💡 Make sure at least one provider is running:")
-                print("   python -m connectit deploy-hf --model distilgpt2 --price-per-token 0.002 --port 4001")
+                print("   python -m bee2bee deploy-hf --model distilgpt2 --price-per-token 0.002 --port 4001")
         
         except Exception as e:
             print(f"❌ Connection error: {e}")
@@ -236,7 +236,7 @@ async def custom_configuration_example():
         {"model": "microsoft/DialoGPT-medium", "max_tokens": 25, "prompt": "How's the weather today?"}
     ]
     
-    async with ConnectITP2PClient() as client:
+    async with Bee2BeeP2PClient() as client:
         await client.connect_to_network("ws://127.0.0.1:4001")
         
         for config in configurations:
@@ -256,10 +256,10 @@ async def custom_configuration_example():
 
 async def main():
     """Run all examples."""
-    print("🚀 ConnectIT P2P Request Demo")
+    print("🚀 Bee2Bee P2P Request Demo")
     print("==============================")
     print("\n💡 Make sure you have a provider running:")
-    print("   python -m connectit deploy-hf --model distilgpt2 --price-per-token 0.002 --port 4001")
+    print("   python -m bee2bee deploy-hf --model distilgpt2 --price-per-token 0.002 --port 4001")
     print("\n⏳ Starting examples in 3 seconds...")
     await asyncio.sleep(3)
     

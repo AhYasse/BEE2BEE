@@ -8,18 +8,18 @@ from pathlib import Path
 from typing import Any, Dict
 
 
-def connectit_home() -> Path:
-    base = os.environ.get("CONNECTIT_HOME")
+def bee2bee_home() -> Path:
+    base = os.environ.get("BEE2BEE_HOME")
     if base:
         p = Path(base)
     else:
-        p = Path.home() / ".connectit"
+        p = Path.home() / ".bee2bee"
     p.mkdir(parents=True, exist_ok=True)
     return p
 
 
 def data_file(name: str) -> Path:
-    p = connectit_home() / name
+    p = bee2bee_home() / name
     if not p.parent.exists():
         p.parent.mkdir(parents=True, exist_ok=True)
     return p

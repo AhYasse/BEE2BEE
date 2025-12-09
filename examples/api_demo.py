@@ -4,14 +4,14 @@ import time
 import requests
 import multiprocessing
 import uvicorn
-from connectit.api import app
+from bee2bee.api import app
 
 def start_api_server():
     """Run the API server in a separate process."""
     uvicorn.run(app, host="127.0.0.1", port=8000, log_level="error")
 
 def run_demo():
-    print("🚀 Starting ConnectIT API Demo...")
+    print("🚀 Starting Bee2Bee API Demo...")
     
     # Start API in background process
     p = multiprocessing.Process(target=start_api_server)

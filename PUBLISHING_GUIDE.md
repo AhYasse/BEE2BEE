@@ -1,6 +1,6 @@
-# Publishing ConnectIT to PyPI
+# Publishing Bee2Bee to PyPI
 
-This guide walks you through the process of publishing the ConnectIT library to the Python Package Index (PyPI).
+This guide walks you through the process of publishing the Bee2Bee library to the Python Package Index (PyPI).
 
 ## Prerequisites
 
@@ -46,8 +46,8 @@ python -m build
 ```
 
 This creates:
-- `dist/connectit-0.1.0.tar.gz` (source distribution)
-- `dist/connectit-0.1.0-py3-none-any.whl` (wheel)
+- `dist/bee2bee-3.3.0.tar.gz` (source distribution)
+- `dist/bee2bee-3.3.0-py3-none-any.whl` (wheel)
 
 ### 4. Test Upload to TestPyPI (Recommended)
 
@@ -64,7 +64,7 @@ You'll be prompted for:
 
 ```bash
 # Test install from TestPyPI
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ connectit
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ bee2bee
 ```
 
 ### 6. Upload to Production PyPI
@@ -132,16 +132,16 @@ python -m twine upload dist/*
 
 ## Installation Commands for Users
 
-Once published, users can install ConnectIT:
+Once published, users can install Bee2Bee:
 
 ```bash
 # Basic installation
-pip install connectit
+pip install bee2bee
 
 # With optional dependencies
-pip install connectit[hf]        # Hugging Face support
-pip install connectit[torch]     # PyTorch support
-pip install connectit[all]       # All optional dependencies
+pip install bee2bee[hf]        # Hugging Face support
+pip install bee2bee[torch]     # PyTorch support
+pip install bee2bee[all]       # All optional dependencies
 ```
 
 ## Troubleshooting
@@ -175,8 +175,8 @@ tar -tzf dist/connectit-0.1.0.tar.gz
 
 1. **Test Installation**
    ```bash
-   pip install connectit
-   python -c "import connectit; print('Success!')"
+   pip install bee2bee
+   python -c "import bee2bee; print('Success!')"
    ```
 
 2. **Update Documentation**
@@ -198,5 +198,5 @@ tar -tzf dist/connectit-0.1.0.tar.gz
 
 ## Contact
 
-For commercial licensing or questions about ConnectIT:
+For commercial licensing or questions about Bee2Bee:
 📧 loaiabdalslam@gmail.com

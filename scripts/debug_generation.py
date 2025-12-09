@@ -6,7 +6,7 @@ Debug script to test generation request directly
 import asyncio
 import json
 import websockets
-from connectit.p2p_runtime import P2PNode
+from bee2bee.p2p_runtime import P2PNode
 
 async def test_direct_generation():
     """Test generation by connecting directly to the deploy-hf server"""
@@ -144,7 +144,7 @@ async def test_p2p_node_generation():
         return False
 
 async def main():
-    print("ConnectIT Generation Debug Tool")
+    print("Bee2Bee Generation Debug Tool")
     print("================================\n")
     
     # Test 1: Direct WebSocket connection

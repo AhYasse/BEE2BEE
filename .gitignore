@@ -54,3 +54,5 @@ Thumbs.db
 !tauri-app/**/*.ts
 !tauri-app/**/*.tsx
 !tauri-app/**/lib/
+
+egg-info

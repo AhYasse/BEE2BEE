@@ -15,7 +15,7 @@ from .config import get_bootstrap_url, set_bootstrap_url, load_config
 @click.group(invoke_without_command=True)
 @click.pass_context
 def cli(ctx):
-    """ConnectIT CLI V2 - Decentralized AI Network"""
+    """Bee2Bee CLI V2 - Decentralized AI Network"""
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
 
@@ -115,7 +115,7 @@ def p2p_request(prompt, model, bootstrap_link, max_new_tokens):
         bootstrap_link = get_bootstrap_url()
 
     async def _run():
-        console.print("\n🚀 [bold cyan]ConnectIT Client[/bold cyan]")
+        console.print("\n🚀 [bold cyan]Bee2Bee Client[/bold cyan]")
         console.print(f"🔗 [dim]Bootstrap: {bootstrap_link}[/dim]")
         
         node = P2PNode(host="127.0.0.1", port=0)
@@ -167,21 +167,21 @@ def p2p_request(prompt, model, bootstrap_link, max_new_tokens):
 @click.option('--p2p-port', default=4003, help='P2P Port')
 @click.option('--bootstrap', default=None, help='Bootstrap URL (Optional)')
 def api(host, port, p2p_port, bootstrap):
-    """Start the ConnectIT API server (Main Point)."""
-    os.environ["CONNECTIT_PORT"] = str(p2p_port)
+    """Start the Bee2Bee API server (Main Point)."""
+    os.environ["BEE2BEE_PORT"] = str(p2p_port)
     
     # The API Server (Main Point) determines the network. 
     # It should NOT auto-connect to the client-side config (which points to the Main Point).
     # Only connect to a bootstrap if explicitly told to (e.g., joining a mesh).
     if bootstrap:
-         os.environ["CONNECTIT_BOOTSTRAP"] = bootstrap
+         os.environ["BEE2BEE_BOOTSTRAP"] = bootstrap
     else:
          # Ensure we don't pick up stray env vars or config
-         os.environ["CONNECTIT_BOOTSTRAP"] = ""
+         os.environ["BEE2BEE_BOOTSTRAP"] = ""
         
     import uvicorn
     console.print(f"[bold green]🚀 Starting Main Point API on http://{host}:{port}[/bold green]")
-    uvicorn.run("connectit.api:app", host=host, port=port, reload=False)
+    uvicorn.run("bee2bee.api:app", host=host, port=port, reload=False)
 
 
 
