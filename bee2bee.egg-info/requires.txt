@@ -35,6 +35,10 @@ aiortc>=1.9.0
 onnx>=1.14
 onnxruntime>=1.17
 
+[test]
+pytest
+httpx
+
 [torch]
 
 [torch:platform_system != "Windows" or platform_machine != "ARM64"]

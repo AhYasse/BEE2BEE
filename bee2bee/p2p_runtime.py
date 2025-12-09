@@ -5,8 +5,8 @@ import time
 import base64
 from typing import Any, Dict, List, Optional, Tuple
 import websockets
-from websockets.server import WebSocketServerProtocol
-from websockets.client import WebSocketClientProtocol
+from websockets.asyncio.server import serve, ServerConnection
+from websockets.asyncio.client import connect, ClientConnection
 from rich.console import Console
 
 from .p2p import parse_join_link, sha256_hex_bytes
@@ -34,7 +34,7 @@ class P2PNode:
         
         # We'll set self.addr after start() once we know the port
         self.addr = "" 
-        self.server: Optional[websockets.server.Serve] = None
+        self.server: Optional[websockets.asyncio.server.Server] = None
         
         # State
         self.peers: Dict[str, Dict[str, Any]] = {}  # pid -> {ws, addr, last_pong_ms}
@@ -110,11 +110,11 @@ class P2PNode:
                     self.providers[pid]["health"] = "degraded"
 
     async def start(self):
-        async def handler(ws: WebSocketServerProtocol):
+        async def handler(ws: ServerConnection):
             await self._handle_connection(ws)
             
         # console.log(f"[cyan]P2P listening[/cyan] on ws://{self.host}:{self.port}")
-        self.server = await websockets.serve(handler, self.host, self.port, max_size=32*1024*1024)
+        self.server = await serve(handler, self.host, self.port, max_size=32*1024*1024)
         self._running = True
         
         # Resolve actual port if 0
@@ -201,7 +201,7 @@ class P2PNode:
             return
             
         try:
-            ws = await websockets.connect(addr, max_size=32*1024*1024)
+            ws = await connect(addr, max_size=32*1024*1024)
         except Exception as e:
             raise IOError(f"Could not connect to {addr}: {e}")
             
@@ -214,11 +214,11 @@ class P2PNode:
         await self._send(ws, self._make_hello_msg())
         asyncio.create_task(self._peer_reader(ws))
 
-    async def _handle_connection(self, ws: WebSocketServerProtocol):
+    async def _handle_connection(self, ws: ServerConnection):
         console.log(f"[cyan]New connection from {ws.remote_address}[/cyan]")
         await self._peer_reader(ws)
 
-    async def _peer_reader(self, ws: WebSocketClientProtocol | WebSocketServerProtocol):
+    async def _peer_reader(self, ws: ClientConnection | ServerConnection):
         rem = ws.remote_address
         console.log(f"[dim]Reader started for {rem}[/dim]")
         try:

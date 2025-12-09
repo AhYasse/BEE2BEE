@@ -1,5 +1,5 @@
-def run():
-    from connectit.utils import new_id, sha256_hex, hash_password, gen_salt
+def test_run():
+    from bee2bee.utils import new_id, sha256_hex, hash_password, gen_salt
     a = new_id("x")
     b = new_id("x")
     assert a != b and a.startswith("x-"), "new_id uniqueness/prefix"

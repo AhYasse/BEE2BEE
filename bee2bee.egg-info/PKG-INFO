@@ -83,6 +83,9 @@ Requires-Dist: kademlia>=2.2.2; extra == "dht"
 Provides-Extra: nat
 Requires-Dist: miniupnpc>=2.2.5; extra == "nat"
 Requires-Dist: aiortc>=1.9.0; extra == "nat"
+Provides-Extra: test
+Requires-Dist: pytest; extra == "test"
+Requires-Dist: httpx; extra == "test"
 Provides-Extra: all
 Requires-Dist: transformers>=4.40; extra == "all"
 Requires-Dist: datasets>=2.17; extra == "all"
@@ -98,7 +101,7 @@ Bee2Bee
 =======
 
 <div align="center">
-  <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1016671&theme=neutral&t=1758001359763" alt="Bee2Bee Badge" width="250" />
+  <a href="https://www.producthunt.com/products/connect-it?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-bee2bee" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1048013&theme=dark&t=1765265705335" alt="Bee2Bee - BEE2BEE&#0058;&#0032;Return&#0032;to&#0032;Decentralized&#0032;AI | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
 </div>
 
 # Bee2Bee: Decentralized AI Network

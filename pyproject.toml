@@ -54,6 +54,10 @@ nat = [
   "miniupnpc>=2.2.5",
   "aiortc>=1.9.0",
 ]
+test = [
+  "pytest",
+  "httpx",
+]
 all = [
   "transformers>=4.40",
   "datasets>=2.17",

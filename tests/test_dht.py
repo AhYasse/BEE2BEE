@@ -1,8 +1,8 @@
 import asyncio
 
 
-def run():
-    from connectit.dht import DHTNode, announce_piece, find_providers
+def test_run():
+    from bee2bee.dht import DHTNode, announce_piece, find_providers
 
     async def main():
         dht = DHTNode()
